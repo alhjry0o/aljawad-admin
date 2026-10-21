@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '../lib/firebase'; // تأكد من تصدير app
-
-const functions = getFunctions(app);
+import { collection, getDocs } from 'firebase/firestore';
+import { db, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/firebase';
+import { Send } from 'lucide-react';
 
 export function Notifications() {
   const [title, setTitle] = useState('');
@@ -12,37 +11,79 @@ export function Notifications() {
   const sendNotification = async () => {
     setSending(true);
     try {
-      const sendBroadcast = httpsCallable(functions, 'sendBroadcast');
-      await sendBroadcast({ title, body });
-      alert('تم إرسال الإشعار بنجاح!');
+      // 1. جلب جميع الأجهزة من قاعدة البيانات (Firestore)
+      const querySnapshot = await getDocs(collection(db, 'users'));
+      const tokens: string[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.fcmToken) tokens.push(data.fcmToken);
+      });
+
+      if (tokens.length === 0) {
+        alert('لا توجد أجهزة مسجلة حالياً. تأكد من فتح التطبيق على الأقل مرة واحدة.');
+        setSending(false);
+        return;
+      }
+
+      // 2. إرسال الإشعار لكل جهاز عبر دالة Supabase
+      let successCount = 0;
+      for (const token of tokens) {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/send-notification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ token, title, body }),
+        });
+        
+        if (res.ok) successCount++;
+      }
+
+      alert(`تم إرسال الإشعار إلى ${successCount} جهاز بنجاح!`);
       setTitle('');
       setBody('');
     } catch (error) {
       console.error(error);
-      alert('حدث خطأ أثناء الإرسال');
+      alert('حدث خطأ أثناء الإرسال. تأكد من إعدادات Supabase ولوحة التحكم.');
     }
     setSending(false);
   };
 
   return (
-    <div className="glass-panel p-6 rounded-2xl max-w-lg">
-      <h2 className="text-xl font-bold text-white mb-4">إرسال إشعار جماعي</h2>
-      <input 
-        className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white mb-3" 
-        placeholder="عنوان الإشعار" 
-        value={title} onChange={(e) => setTitle(e.target.value)}
-      />
-      <textarea 
-        className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white mb-3" 
-        placeholder="نص الإشعار" 
-        value={body} onChange={(e) => setBody(e.target.value)}
-      />
-      <button 
-        onClick={sendNotification} disabled={sending || !title || !body}
-        className="bg-[#1fa36a] text-white px-6 py-2 rounded-lg font-bold disabled:opacity-50"
-      >
-        {sending ? 'جاري الإرسال...' : 'إرسال'}
-      </button>
+    <div className="glass-panel p-8 rounded-2xl max-w-xl">
+      <h2 className="text-xl font-bold text-white mb-6">إرسال إشعار جماعي</h2>
+      
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm text-[#8ea39c] mb-2">عنوان الإشعار</label>
+          <input 
+            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-[#1fa36a]" 
+            placeholder="مثال: خصم خاص بمناسبة اليوم الوطني" 
+            value={title} 
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm text-[#8ea39c] mb-2">نص الإشعار</label>
+          <textarea 
+            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-[#1fa36a] h-32 resize-none" 
+            placeholder="اكتب تفاصيل الإشعار هنا..." 
+            value={body} 
+            onChange={(e) => setBody(e.target.value)}
+          />
+        </div>
+
+        <button 
+          onClick={sendNotification} 
+          disabled={sending || !title || !body}
+          className="flex items-center justify-center gap-2 w-full bg-[#1fa36a] hover:bg-[#1fa36a]/90 text-white px-6 py-3 rounded-xl font-bold transition-all disabled:opacity-50"
+        >
+          <Send size={18} />
+          {sending ? 'جاري الإرسال...' : 'إرسال الإشعار الآن'}
+        </button>
+      </div>
     </div>
   );
 }
