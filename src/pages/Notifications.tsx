@@ -44,9 +44,9 @@ export function Notifications() {
       alert(`تم إرسال الإشعار إلى ${successCount} جهاز بنجاح!`);
       setTitle('');
       setBody('');
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('حدث خطأ أثناء الإرسال. تأكد من إعدادات Supabase ولوحة التحكم.');
+      alert('الخطأ هو: ' + (error.message || String(error)));
     }
     setSending(false);
   };
