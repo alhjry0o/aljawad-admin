@@ -32,8 +32,7 @@ export function Notifications() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': SUPABASE_ANON_KEY, // ✅ المفتاح الجديد يوضع هنا
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, // ✅ نبقيه للتوافق
+            'apikey': SUPABASE_ANON_KEY,
           },
           body: JSON.stringify({ token, title, body }),
         });
