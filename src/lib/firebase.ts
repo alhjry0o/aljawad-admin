@@ -16,5 +16,5 @@ export const db = getFirestore(app);
 
 // --- إعدادات Supabase ---
 // انسخ الرابط والمفتاح من لوحة تحكم Supabase (Project Settings > API)
-export const SUPABASE_URL = 'https://fqhlnrwqceqznnwalod.supabase.co';
+export const SUPABASE_URL = 'https://fqhlunrwqceqznnwalod.supabase.co';
 export const SUPABASE_ANON_KEY = 'sb_publishable_dq-R4PAgPblSf0e88K2YmQ_9EW4i2e1';
