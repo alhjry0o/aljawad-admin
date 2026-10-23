@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { collection, onSnapshot, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { db, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/firebase';
 
 export function Orders() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -17,9 +17,43 @@ export function Orders() {
     return () => unsub();
   }, []);
 
-  const updateStatus = async (id: string, status: string) => {
+  // ✅ الدالة المحدثة: تحديث الحالة + إرسال إشعار للعميل
+  const updateStatus = async (id: string, status: string, deviceId: string, reference: string) => {
     try {
+      // 1. تحديث حالة الطلب في قاعدة البيانات (Firestore)
       await updateDoc(doc(db, 'requests', id), { status });
+
+      // 2. جلب توكن الجهاز الخاص بالعميل وإرسال الإشعار
+      if (deviceId) {
+        const userDoc = await getDoc(doc(db, 'users', deviceId));
+        if (userDoc.exists()) {
+          const token = userDoc.data().fcmToken;
+          
+          if (token) {
+            // ترجمة الحالة إلى نص عربي لكي يظهر في الإشعار
+            let statusAr = status;
+            if (status === 'review') statusAr = 'قيد المراجعة';
+            else if (status === 'completed') statusAr = 'مكتمل';
+            else if (status === 'scheduled') statusAr = 'تمت الجدولة';
+            else if (status === 'cancelled') statusAr = 'ملغي';
+            else if (status === 'submitted') statusAr = 'جديد';
+
+            // إرسال الطلب إلى دالة Supabase
+            await fetch(`${SUPABASE_URL}/functions/v1/send-notification`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_ANON_KEY,
+              },
+              body: JSON.stringify({ 
+                token, 
+                title: 'تحديث حالة الطلب', 
+                body: `طلبك رقم ${reference} أصبح: ${statusAr}` 
+              }),
+            });
+          }
+        }
+      }
     } catch (error) {
       console.error("Error updating status:", error);
     }
@@ -58,7 +92,8 @@ export function Orders() {
                 <td className="px-6 py-4">
                   <select 
                     value={o.status} 
-                    onChange={(e) => updateStatus(o.id, e.target.value)}
+                    // ✅ تمرير deviceId و reference إلى دالة التحديث
+                    onChange={(e) => updateStatus(o.id, e.target.value, o.deviceId, o.reference)}
                     className="bg-[#0d1a17] border border-white/10 rounded-lg px-3 py-2 text-white outline-none focus:border-[#1fa36a] cursor-pointer"
                   >
                     <option value="submitted">جديد</option>
