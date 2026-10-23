@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { LayoutDashboard, ShoppingBag, LogOut, Bell } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, LogOut, Bell, BarChart3 } from 'lucide-react';
 import { Dashboard } from './pages/Dashboard';
 import { Orders } from './pages/Orders';
-import { Notifications } from './pages/Notifications'; // ✅ استيراد صفحة الإشعارات
+import { Notifications } from './pages/Notifications';
+import { Stats } from './pages/Stats'; // ✅ استيراد صفحة الإحصائيات
 
 export default function App() {
-  // ✅ إضافة 'notifications' إلى الحالات المتاحة
-  const [tab, setTab] = useState<'dashboard' | 'orders' | 'notifications'>('dashboard');
+  // ✅ إضافة 'stats' إلى الحالات
+  const [tab, setTab] = useState<'dashboard' | 'stats' | 'orders' | 'notifications'>('dashboard');
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#030605]">
@@ -26,11 +27,14 @@ export default function App() {
           <LayoutDashboard size={20} /> الرئيسية
         </button>
         
+        <button onClick={() => setTab('stats')} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${tab === 'stats' ? 'bg-[#1fa36a]/10 text-[#1fa36a] border border-[#1fa36a]/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+          <BarChart3 size={20} /> الإحصائيات
+        </button>
+
         <button onClick={() => setTab('orders')} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${tab === 'orders' ? 'bg-[#1fa36a]/10 text-[#1fa36a] border border-[#1fa36a]/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
           <ShoppingBag size={20} /> إدارة الطلبات
         </button>
 
-        {/* ✅ زر الإشعارات الجديد */}
         <button onClick={() => setTab('notifications')} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${tab === 'notifications' ? 'bg-[#1fa36a]/10 text-[#1fa36a] border border-[#1fa36a]/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
           <Bell size={20} /> الإشعارات
         </button>
@@ -46,7 +50,7 @@ export default function App() {
       <main className="flex-1 overflow-y-auto p-8">
         <header className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold text-white">
-            {tab === 'dashboard' ? 'نظرة عامة' : tab === 'orders' ? 'إدارة الطلبات' : 'مركز الإشعارات'}
+            {tab === 'dashboard' ? 'نظرة عامة' : tab === 'stats' ? 'الإحصائيات' : tab === 'orders' ? 'إدارة الطلبات' : 'مركز الإشعارات'}
           </h2>
           <div className="flex items-center gap-3">
              <div className="w-2 h-2 rounded-full bg-[#1fa36a] animate-pulse"></div>
@@ -54,8 +58,9 @@ export default function App() {
           </div>
         </header>
         
-        {/* ✅ عرض صفحة الإشعارات */}
+        {/* ✅ عرض صفحة الإحصائيات */}
         {tab === 'dashboard' && <Dashboard />}
+        {tab === 'stats' && <Stats />}
         {tab === 'orders' && <Orders />}
         {tab === 'notifications' && <Notifications />}
       </main>
