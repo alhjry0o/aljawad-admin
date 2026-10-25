@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, addDoc } from 'firebase/firestore';
 import { db, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/firebase';
 import { Send } from 'lucide-react';
 
@@ -17,6 +17,13 @@ export function Notifications() {
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         if (data.fcmToken) tokens.push(data.fcmToken);
+      });
+
+      // ✅ حفظ الإشعار في قاعدة البيانات ليقرأه التطبيق
+      await addDoc(collection(db, 'notifications'), {
+        title,
+        body,
+        createdAt: Date.now(),
       });
 
       if (tokens.length === 0) {
