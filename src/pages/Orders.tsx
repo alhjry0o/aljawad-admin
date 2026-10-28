@@ -44,7 +44,8 @@ export function Orders() {
               body: JSON.stringify({ 
                 token, 
                 title: 'تحديث حالة الطلب', 
-                body: `طلبك رقم ${reference} أصبح: ${statusAr}` 
+                body: `طلبك رقم ${reference} أصبح: ${statusAr}`,
+                screen: 'requests' // ✅ أضفنا التوجيه
               }),
             });
           }
