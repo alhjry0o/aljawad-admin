@@ -23,6 +23,7 @@ export function Notifications() {
       await addDoc(collection(db, 'notifications'), {
         title,
         body,
+        screen: 'notifications', // ✅ العلامة الخاصة بالتوجيه
         createdAt: Date.now(),
       });
 
@@ -41,7 +42,7 @@ export function Notifications() {
             'Content-Type': 'application/json',
             'apikey': SUPABASE_ANON_KEY,
           },
-          body: JSON.stringify({ token, title, body }),
+          body: JSON.stringify({ token, title, body, screen: 'notifications' }), // ✅ أضفنا التوجيه
         });
         
         if (res.ok) successCount++;
